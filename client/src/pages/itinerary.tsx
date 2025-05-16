@@ -4,7 +4,8 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import ItineraryDay, { Activity } from "@/components/ItineraryDay";
-import { Edit, Share, Download, X, Plus, Info } from "lucide-react";
+import { Edit, Share, Download, X, Plus, Info, Printer } from "lucide-react";
+import { jsPDF } from "jspdf";
 
 interface ItineraryDay {
   date: string;
@@ -110,6 +111,122 @@ const Itinerary: React.FC = () => {
         interests: [...itineraryParams.interests, newInterest.trim()],
       });
       setNewInterest("");
+    }
+  };
+  
+  // Exportar roteiro para PDF
+  const exportToPDF = () => {
+    if (generatedItinerary.length === 0) {
+      toast({
+        title: "Nenhum roteiro para exportar",
+        description: "Gere um roteiro primeiro antes de exportar para PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      // Título
+      doc.setFontSize(18);
+      doc.setTextColor(20, 80, 140);
+      const title = `Roteiro de Viagem: ${itineraryParams.mainDestination}`;
+      const titleWidth = doc.getStringUnitWidth(title) * doc.getFontSize() / doc.internal.scaleFactor;
+      const titleX = (pageWidth - titleWidth) / 2;
+      doc.text(title, titleX, 20);
+      
+      // Detalhes da viagem
+      doc.setFontSize(11);
+      doc.setTextColor(60, 60, 60);
+      
+      // Calcular duração da viagem
+      const startDate = new Date(itineraryParams.startDate);
+      const endDate = new Date(itineraryParams.endDate);
+      const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      
+      doc.text(`Período: ${new Date(itineraryParams.startDate).toLocaleDateString('pt-BR')} a ${new Date(itineraryParams.endDate).toLocaleDateString('pt-BR')} (${diffDays} dias)`, 20, 30);
+      
+      if (itineraryParams.otherDestinations.length > 0) {
+        doc.text(`Outros destinos: ${itineraryParams.otherDestinations.join(', ')}`, 20, 36);
+      }
+      
+      if (itineraryParams.interests.length > 0) {
+        doc.text(`Interesses: ${itineraryParams.interests.join(', ')}`, 20, 42);
+      }
+      
+      // Espaçamentos
+      let y = 50; // posição vertical inicial
+      const lineHeight = 7;
+      
+      // Dias do roteiro
+      generatedItinerary.forEach((day) => {
+        // Verificar se precisamos de uma nova página
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        // Título do dia
+        doc.setFontSize(14);
+        doc.setTextColor(40, 60, 120);
+        doc.text(`${day.date} - ${day.title}`, 20, y);
+        y += lineHeight + 2;
+        
+        // Atividades
+        doc.setFontSize(10);
+        doc.setTextColor(60, 60, 60);
+        day.activities.forEach((activity) => {
+          // Verificar se precisamos de uma nova página
+          if (y > 275) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          // Formato: Horário - Descrição
+          doc.text(`${activity.time}: ${activity.description}`, 25, y);
+          y += lineHeight - 1;
+        });
+        
+        // Dica do dia (se houver)
+        if (day.tip) {
+          // Verificar se precisamos de uma nova página
+          if (y > 275) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          doc.setFontSize(9);
+          doc.setTextColor(100, 80, 40);
+          doc.text(`Dica: ${day.tip}`, 25, y);
+          y += lineHeight;
+        }
+        
+        y += lineHeight; // Espaço entre dias
+      });
+      
+      // Rodapé
+      const date = new Date().toLocaleDateString('pt-BR');
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Gerado por TravelPlanner em ${date}`, 20, 290);
+      
+      // Salvar o PDF
+      doc.save(`Roteiro_${itineraryParams.mainDestination.replace(/\s+/g, '_')}.pdf`);
+      
+      toast({
+        title: "PDF gerado com sucesso!",
+        description: "Seu roteiro foi exportado para PDF.",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Ocorreu um erro ao gerar o arquivo PDF. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 

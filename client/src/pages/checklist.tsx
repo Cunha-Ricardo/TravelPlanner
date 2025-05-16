@@ -428,9 +428,19 @@ const Checklist: React.FC = () => {
               <h3 className="text-lg font-semibold">
                 Seu Checklist para {checklistParams.destination}
               </h3>
-              <div className="text-sm text-gray-500">
-                {generatedChecklist.filter((item) => item.checked).length} de{" "}
-                {generatedChecklist.length} itens
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-500">
+                  {generatedChecklist.filter((item) => item.checked).length} de{" "}
+                  {generatedChecklist.length} itens
+                </div>
+                <button
+                  onClick={exportToPDF}
+                  className="flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 hover:bg-primary-200 rounded-md text-sm font-medium transition-colors"
+                  title="Exportar para PDF"
+                >
+                  <Download size={16} />
+                  PDF
+                </button>
               </div>
             </div>
 
