@@ -1,0 +1,97 @@
+Quero um app de viagem por completo, com escolhas de lugar (destino) com aba de conversão de moeda atualizada, e roteiro com datas de viagem e oque vai fazer nos dias!
+
+quero que tenha um checklist de viagem, separado e gerado, pode fazer perfeito! 🎯 Objetivo do Prompt Gerar uma lista de itens personalizados que ajude o usuário a se preparar melhor para sua viagem — sem esquecer nada importante.
+
+💡 Prompt Inteligente (em linguagem natural para IA ou sistema interno) plaintext Copiar Editar Gere um checklist inteligente de viagem com base nos seguintes parâmetros:
+
+Destino: [nome do destino]
+Clima esperado: [frio / quente / tropical / chuvoso / instável]
+Duração da viagem: [X dias]
+Tipo de viagem: [turismo / negócios / aventura / praia / mochilão / luxo / outro]
+Perfil do viajante: [homem / mulher / criança / idoso / pet]
+Itens já confirmados pelo usuário: [passagem comprada / hospedagem ok / etc.]
+O checklist deve ser dividido por categorias:
+
+Documentos (ex: passaporte, RG, seguro viagem)
+Roupas adequadas ao clima (ex: casaco, bermuda, biquíni)
+Higiene pessoal (ex: escova de dente, shampoo)
+Eletrônicos (ex: carregador, adaptador de tomada, power bank)
+Saúde (ex: remédios, protetor solar, repelente)
+Específicos por tipo de viagem (ex: roupa social, tênis de trilha, guia turístico)
+Outros essenciais (cartões, dinheiro, snacks, etc.)
+Extras:
+
+Adicione lembretes automáticos se o destino exigir visto ou vacina.
+Permita marcar itens como “Pronto” e mostre barra de progresso.
+Deixe o usuário adicionar/remover itens e categorias.
+Exiba sugestões com base no histórico de viagens anteriores. 🧠 Exemplos Gerados (caso use uma IA) Viagem: Chile, Inverno, 10 dias, Turismo Checklist gerado:
+Documentos
+
+✅ Passaporte
+
+✅ Documento com foto
+
+⬜ Comprovante de hospedagem
+
+Roupas
+
+⬜ Casaco térmico
+
+⬜ Luvas e gorro
+
+⬜ Calça jeans/resistente
+
+Saúde
+
+⬜ Protetor labial
+
+⬜ Remédio para resfriado
+
+Eletrônicos
+
+✅ Carregador de celular
+
+⬜ Adaptador de tomada (padrão chileno)
+
+⬜ Power bank
+
+Extras
+
+⬜ Lanches rápidos
+
+⬜ Lista de endereços úteis
+
+🛠️ Funcionalidades Técnicas no App: Cada item tem um checkbox.
+
+Itens riscados ao serem marcados como prontos.
+
+Progresso visual com % de itens preparados.
+
+Botão: “+ Adicionar item personalizado”.
+
+Filtro por categorias.
+
+Botão: “Limpar tudo” e “Salvar checklist”.
+
+
+app em portugues quero que tenha a opção de escolher outro itinerario, quero que o cjecklist seja maior, e dados de transporte por exemplo e hotel!
+
+AIzaSyC-FgFCkQj9Jw0-wEJvVuTo5vwvO08hVko api mapa
+
+ import openai
+
+openai.api_key = "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"
+
+messages = [
+    {"role": "system", "content": "Você é um especialista sábio em viagens internacionais. Suas respostas são curtas, objetivas e cheias de conhecimento prático. Fale como um guia experiente, sempre com poucas palavras. Não escreva mais que 30 palavras por resposta."},
+    {"role": "user", "content": "Qual o melhor país para visitar em abril?"}
+]
+
+response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=messages,
+    max_tokens=50,
+    temperature=0.7
+)
+
+print(response.choices[0].message["content"])
