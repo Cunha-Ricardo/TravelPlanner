@@ -8,8 +8,9 @@ const openai = new OpenAI({
 // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const MODEL = "gpt-4o";
 
-// Assistente específico para criação de roteiros
+// Assistentes específicos
 const ROTEIRO_ASSISTANT_ID = "asst_orz98VXa4zht5BF5fvHd7TxL";
+const CHECKLIST_ASSISTANT_ID = "asst_lGYYrCgs2YomNqb1mgFmvFz5";
 
 /**
  * Send a message to the OpenAI API and get a response
@@ -180,7 +181,7 @@ export async function generateItinerary(params: {
 }
 
 /**
- * Generate a travel checklist using OpenAI
+ * Generate a travel checklist using OpenAI Assistant
  * @param params Parameters for the checklist
  * @returns The generated checklist items
  */
@@ -200,62 +201,119 @@ export async function generateChecklist(params: {
       confirmedItems 
     } = params;
     
-    // Format the prompt
-    const prompt = `
-      Gere um checklist inteligente de viagem com base nos seguintes parâmetros:
-      
-      - Destino: ${destination}
-      - Clima esperado: ${climate}
-      - Duração da viagem: ${duration} dias
-      - Tipo de viagem: ${tripType}
-      - Itens já confirmados pelo usuário: ${confirmedItems.join(', ')}
-      
-      O checklist deve ser dividido por categorias:
-      - Documentos (ex: passaporte, RG, seguro viagem)
-      - Roupas adequadas ao clima (ex: casaco, bermuda, biquíni)
-      - Higiene pessoal (ex: escova de dente, shampoo)
-      - Eletrônicos (ex: carregador, adaptador de tomada, power bank)
-      - Saúde (ex: remédios, protetor solar, repelente)
-      - Específicos por tipo de viagem (ex: roupa social, tênis de trilha, guia turístico)
-      - Transporte (ex: reserva de carro, passagens)
-      - Hotel (ex: confirmação de reserva)
-      - Outros essenciais (cartões, dinheiro, snacks, etc.)
-      
-      Cada categoria deve ter pelo menos 4-5 itens relevantes.
-      
-      Formate sua resposta como um JSON com a seguinte estrutura:
-      [
-        { "id": "1", "text": "Passaporte", "category": "Documentos", "checked": false },
-        { "id": "2", "text": "Seguro viagem", "category": "Documentos", "checked": false },
-        ...
-      ]
-      
-      Obs: Os itens que já estão na lista de "Itens já confirmados pelo usuário" devem ser marcados como "checked": true.
+    // Format the prompt for the assistant
+    const mensagem_usuario = `
+    Gere um checklist inteligente de viagem com base nos seguintes parâmetros:
+    
+    - Destino: ${destination}
+    - Clima esperado: ${climate}
+    - Duração da viagem: ${duration} dias
+    - Tipo de viagem: ${tripType}
+    - Itens já confirmados pelo usuário: ${confirmedItems.join(', ')}
+    
+    O checklist deve ser dividido por categorias:
+    - Documentos (ex: passaporte, RG, seguro viagem)
+    - Roupas adequadas ao clima (ex: casaco, bermuda, biquíni)
+    - Higiene pessoal (ex: escova de dente, shampoo)
+    - Eletrônicos (ex: carregador, adaptador de tomada, power bank)
+    - Saúde (ex: remédios, protetor solar, repelente)
+    - Específicos por tipo de viagem (ex: roupa social, tênis de trilha, guia turístico)
+    - Transporte (ex: reserva de carro, passagens)
+    - Hotel (ex: confirmação de reserva)
+    - Outros essenciais (cartões, dinheiro, snacks, etc.)
+    
+    Cada categoria deve ter pelo menos 4-5 itens relevantes.
+    
+    Formate sua resposta como um JSON com a seguinte estrutura:
+    [
+      { "id": "1", "text": "Passaporte", "category": "Documentos", "checked": false },
+      { "id": "2", "text": "Seguro viagem", "category": "Documentos", "checked": false },
+      ...
+    ]
+    
+    Obs: Os itens que já estão na lista de "Itens já confirmados pelo usuário" devem ser marcados como "checked": true.
     `;
     
-    const response = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [
-        { role: "system", content: "Você é um especialista em planejamento de viagens. Crie checklists detalhados em português com base nas informações fornecidas." },
-        { role: "user", content: prompt }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-    });
+    // Cria uma nova thread
+    console.log("Criando thread para geração de checklist...");
+    const thread = await openai.beta.threads.create();
     
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error("Não foi possível gerar o checklist. Resposta vazia.");
+    // Envia a mensagem para a thread
+    console.log("Enviando mensagem para o assistente de checklist...");
+    await openai.beta.threads.messages.create(
+      thread.id,
+      { role: "user", content: mensagem_usuario }
+    );
+    
+    // Executa o assistente na thread
+    console.log("Executando o assistente de checklist...");
+    const run = await openai.beta.threads.runs.create(
+      thread.id,
+      { assistant_id: CHECKLIST_ASSISTANT_ID }
+    );
+    
+    // Poll para verificar quando o assistente terminar
+    console.log("Aguardando resposta do assistente de checklist...");
+    let runStatus;
+    do {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Espera 1 segundo entre verificações
+      runStatus = await openai.beta.threads.runs.retrieve(
+        thread.id,
+        run.id
+      );
+      console.log(`Status atual do checklist: ${runStatus.status}`);
+    } while (runStatus.status !== "completed" && runStatus.status !== "failed");
+    
+    if (runStatus.status === "failed") {
+      throw new Error(`O assistente de checklist falhou: ${runStatus.last_error?.message || "Erro desconhecido"}`);
+    }
+    
+    // Recupera a mensagem de resposta
+    console.log("Obtendo resposta do assistente de checklist...");
+    const messages = await openai.beta.threads.messages.list(
+      thread.id
+    );
+    
+    // Encontra a última mensagem do assistente
+    let checklist_texto = "";
+    for (const msg of messages.data) {
+      if (msg.role === "assistant") {
+        // Extrai o conteúdo da mensagem
+        if (msg.content && msg.content.length > 0 && msg.content[0].type === 'text') {
+          checklist_texto = msg.content[0].text.value;
+          break;
+        }
+      }
+    }
+    
+    if (!checklist_texto) {
+      throw new Error("O assistente não retornou um checklist.");
+    }
+    
+    // Procura pelo JSON na resposta
+    let jsonMatch = checklist_texto.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    if (!jsonMatch) {
+      // Tenta encontrar o JSON com outra abordagem
+      const startIndex = checklist_texto.indexOf('[');
+      const endIndex = checklist_texto.lastIndexOf(']');
+      
+      if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+        jsonMatch = [checklist_texto.substring(startIndex, endIndex + 1)];
+      } else {
+        throw new Error("Não foi possível encontrar um JSON válido na resposta do assistente de checklist.");
+      }
     }
     
     try {
-      return JSON.parse(content);
+      const checklistData = JSON.parse(jsonMatch[0]);
+      return checklistData;
     } catch (parseError) {
-      console.error("Error parsing JSON response:", parseError);
-      throw new Error("Erro na formatação do checklist gerado.");
+      console.error("Erro ao analisar JSON do checklist:", parseError);
+      throw new Error("Formato de resposta inválido do assistente de checklist.");
     }
   } catch (error) {
-    console.error("Error generating checklist:", error);
-    throw new Error("Falha ao gerar o checklist de viagem.");
+    console.error("Erro ao gerar checklist:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    throw new Error(`Falha ao gerar o checklist de viagem: ${errorMessage}`);
   }
 }

@@ -4,7 +4,8 @@ import { queryClient } from "@/lib/queryClient";
 import ChecklistItem from "@/components/ChecklistItem";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Download, Printer } from "lucide-react";
+import { jsPDF } from "jspdf";
 
 interface ChecklistItemType {
   id: string;
@@ -173,6 +174,99 @@ const Checklist: React.FC = () => {
       toast({
         title: "Item adicionado",
         description: "O item foi adicionado ao seu checklist.",
+      });
+    }
+  };
+  
+  // Exportar checklist para PDF
+  const exportToPDF = () => {
+    if (generatedChecklist.length === 0) {
+      toast({
+        title: "Nenhum checklist para exportar",
+        description: "Gere um checklist primeiro antes de exportar para PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      // Título
+      doc.setFontSize(20);
+      doc.setTextColor(20, 80, 140);
+      const title = `Checklist de Viagem: ${checklistParams.destination}`;
+      const titleWidth = doc.getStringUnitWidth(title) * doc.getFontSize() / doc.internal.scaleFactor;
+      const titleX = (pageWidth - titleWidth) / 2;
+      doc.text(title, titleX, 20);
+      
+      // Detalhes da viagem
+      doc.setFontSize(12);
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Duração: ${checklistParams.duration} dias`, 20, 30);
+      doc.text(`Clima: ${checklistParams.climate}`, 20, 36);
+      doc.text(`Tipo de viagem: ${checklistParams.tripType}`, 20, 42);
+      
+      // Progresso
+      const checkedItems = generatedChecklist.filter(item => item.checked).length;
+      doc.text(`Progresso: ${checkedItems} de ${generatedChecklist.length} itens concluídos`, 20, 50);
+      
+      // Espaçamentos
+      let y = 60; // posição vertical inicial
+      const lineHeight = 7;
+      
+      // Ordenar por categoria
+      Object.entries(categorizedItems).forEach(([category, items]) => {
+        // Verificar se precisamos de uma nova página
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        // Categoria
+        doc.setFontSize(14);
+        doc.setTextColor(40, 40, 40);
+        doc.text(category, 20, y);
+        y += lineHeight;
+        
+        // Itens
+        doc.setFontSize(10);
+        doc.setTextColor(60, 60, 60);
+        items.forEach(item => {
+          const statusSymbol = item.checked ? "☑" : "☐";
+          doc.text(`${statusSymbol} ${item.text}`, 25, y);
+          y += lineHeight - 1;
+          
+          // Verificar se precisamos de uma nova página
+          if (y > 280) {
+            doc.addPage();
+            y = 20;
+          }
+        });
+        
+        y += lineHeight - 2; // Espaço entre categorias
+      });
+      
+      // Rodapé
+      const date = new Date().toLocaleDateString('pt-BR');
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Gerado por TravelPlanner em ${date}`, 20, 290);
+      
+      // Salvar o PDF
+      doc.save(`Checklist_${checklistParams.destination.replace(/\s+/g, '_')}.pdf`);
+      
+      toast({
+        title: "PDF gerado com sucesso!",
+        description: "Seu checklist foi exportado para PDF.",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Ocorreu um erro ao gerar o arquivo PDF. Tente novamente.",
+        variant: "destructive",
       });
     }
   };
