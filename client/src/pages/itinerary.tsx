@@ -40,6 +40,7 @@ const Itinerary: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedItinerary, setGeneratedItinerary] = useState<ItineraryDay[]>([]);
   const [isShowingFullItinerary, setIsShowingFullItinerary] = useState(false);
+  const [showPdfOption, setShowPdfOption] = useState(false);
 
   // Query for getting the itinerary
   const { data: itinerary, isLoading } = useQuery({
@@ -84,10 +85,8 @@ const Itinerary: React.FC = () => {
       if (Array.isArray(data)) {
         setGeneratedItinerary(data);
         
-        toast({
-          title: "Roteiro gerado com sucesso!",
-          description: "Seu itinerário de viagem foi criado usando nosso assistente de IA.",
-        });
+        // Mostrar o modal de opção para baixar PDF
+        setShowPdfOption(true);
       } else {
         throw new Error("Formato de resposta inválido");
       }
@@ -259,6 +258,37 @@ const Itinerary: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Modal de opção para baixar PDF quando terminar a geração */}
+      {showPdfOption && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full m-4 shadow-lg">
+            <h3 className="text-xl font-semibold mb-3">Roteiro gerado com sucesso!</h3>
+            <p className="text-gray-600 mb-4">
+              Seu roteiro para {itineraryParams.mainDestination} foi criado. 
+              Deseja baixar uma versão em PDF agora?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowPdfOption(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+              >
+                Apenas visualizar
+              </button>
+              <button
+                onClick={() => {
+                  exportToPDF();
+                  setShowPdfOption(false);
+                }}
+                className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+              >
+                <Download size={16} className="mr-2" />
+                Baixar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-5xl mx-auto">
         <h2 className="text-2xl font-semibold mb-2">Roteiro de Viagem</h2>
         <p className="text-gray-600 mb-6">
