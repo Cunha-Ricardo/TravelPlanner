@@ -27,35 +27,23 @@ const Navbar = () => {
           </h1>
         </div>
         <div className="hidden md:flex items-center space-x-4">
-          <Link href="/">
-            <a className={`${isLinkActive("/") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Início
-            </a>
+          <Link href="/" className={`${isLinkActive("/") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Início
           </Link>
-          <Link href="/destinos">
-            <a className={`${isLinkActive("/destinos") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Destinos
-            </a>
+          <Link href="/destinos" className={`${isLinkActive("/destinos") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Destinos
           </Link>
-          <Link href="/conversao">
-            <a className={`${isLinkActive("/conversao") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Conversão
-            </a>
+          <Link href="/conversao" className={`${isLinkActive("/conversao") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Conversão
           </Link>
-          <Link href="/checklist">
-            <a className={`${isLinkActive("/checklist") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Checklist
-            </a>
+          <Link href="/checklist" className={`${isLinkActive("/checklist") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Checklist
           </Link>
-          <Link href="/roteiro">
-            <a className={`${isLinkActive("/roteiro") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Roteiro
-            </a>
+          <Link href="/roteiro" className={`${isLinkActive("/roteiro") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Roteiro
           </Link>
-          <Link href="/chat">
-            <a className={`${isLinkActive("/chat") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Chat
-            </a>
+          <Link href="/chat" className={`${isLinkActive("/chat") ? "text-primary-600" : "text-gray-600 hover:text-primary-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Chat
           </Link>
         </div>
         <div className="md:hidden flex items-center">
@@ -71,35 +59,23 @@ const Navbar = () => {
       {/* Mobile Navigation for smaller screens */}
       <div className={`md:hidden bg-white border-b ${isMenuOpen ? "block" : "hidden"}`}>
         <div className="flex flex-col space-y-1 p-2">
-          <Link href="/">
-            <a className={`${isLinkActive("/") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Início
-            </a>
+          <Link href="/" className={`${isLinkActive("/") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Início
           </Link>
-          <Link href="/destinos">
-            <a className={`${isLinkActive("/destinos") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Destinos
-            </a>
+          <Link href="/destinos" className={`${isLinkActive("/destinos") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Destinos
           </Link>
-          <Link href="/conversao">
-            <a className={`${isLinkActive("/conversao") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Conversão
-            </a>
+          <Link href="/conversao" className={`${isLinkActive("/conversao") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Conversão
           </Link>
-          <Link href="/checklist">
-            <a className={`${isLinkActive("/checklist") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Checklist
-            </a>
+          <Link href="/checklist" className={`${isLinkActive("/checklist") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Checklist
           </Link>
-          <Link href="/roteiro">
-            <a className={`${isLinkActive("/roteiro") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Roteiro
-            </a>
+          <Link href="/roteiro" className={`${isLinkActive("/roteiro") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Roteiro
           </Link>
-          <Link href="/chat">
-            <a className={`${isLinkActive("/chat") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
-              Chat
-            </a>
+          <Link href="/chat" className={`${isLinkActive("/chat") ? "text-primary-600" : "text-gray-600"} px-3 py-2 rounded-md text-sm font-medium`}>
+            Chat
           </Link>
         </div>
       </div>
