@@ -438,9 +438,11 @@ const Itinerary: React.FC = () => {
                   <Share className="h-4 w-4 mr-1" />
                   Compartilhar
                 </button>
-                <button className="text-gray-600 hover:text-gray-900 flex items-center text-sm">
+                <button 
+                  onClick={exportToPDF}
+                  className="text-gray-600 hover:text-gray-900 flex items-center text-sm">
                   <Download className="h-4 w-4 mr-1" />
-                  Exportar
+                  Exportar PDF
                 </button>
               </div>
             </div>
