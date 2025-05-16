@@ -81,12 +81,16 @@ const Checklist: React.FC = () => {
     );
   };
 
+  // Estados para controlar a exibição do modal de PDF após geração
+  const [showPdfOption, setShowPdfOption] = useState(false);
+
   // Handle generating the checklist
   const handleGenerateChecklist = () => {
+    setIsGenerating(true);
     queryClient.invalidateQueries({ queryKey: ["/api/checklist"] });
     queryClient.refetchQueries({ queryKey: ["/api/checklist", checklistParams] });
     
-    // Mock data for demonstration
+    // Mock data for demonstration (simulando a chamada ao assistente)
     setTimeout(() => {
       const mockChecklist: ChecklistItemType[] = [
         { id: "1", text: "Passaporte", category: "Documentos", checked: true },
@@ -115,10 +119,8 @@ const Checklist: React.FC = () => {
       setGeneratedChecklist(mockChecklist);
       setIsGenerating(false);
       
-      toast({
-        title: "Checklist gerado com sucesso!",
-        description: "Sua lista de itens para viagem foi criada.",
-      });
+      // Mostra o modal de opção de PDF
+      setShowPdfOption(true);
     }, 1500);
   };
 
@@ -411,7 +413,7 @@ const Checklist: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-3">
             <button
               className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
               onClick={handleGenerateChecklist}
@@ -421,6 +423,37 @@ const Checklist: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Modal de opção para baixar PDF quando terminar a geração */}
+        {showPdfOption && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full m-4 shadow-lg">
+              <h3 className="text-xl font-semibold mb-3">Checklist gerado com sucesso!</h3>
+              <p className="text-gray-600 mb-4">
+                Seu checklist para {checklistParams.destination} foi criado. 
+                Deseja baixar uma versão em PDF agora?
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowPdfOption(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+                >
+                  Apenas visualizar
+                </button>
+                <button
+                  onClick={() => {
+                    exportToPDF();
+                    setShowPdfOption(false);
+                  }}
+                  className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                >
+                  <Download size={16} className="mr-2" />
+                  Baixar PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {generatedChecklist.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm p-6">
