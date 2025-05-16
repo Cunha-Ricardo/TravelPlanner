@@ -38,7 +38,7 @@ export async function sendMessage(message: string): Promise<string> {
 }
 
 /**
- * Generate a travel itinerary using OpenAI
+ * Generate a travel itinerary using OpenAI Assistant
  * @param params Parameters for the itinerary
  * @returns The generated itinerary
  */
@@ -65,62 +65,117 @@ export async function generateItinerary(params: {
     const end = new Date(endDate);
     const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    // Format the prompt
-    const prompt = `
-      Crie um roteiro detalhado de viagem para os seguintes parâmetros:
-      
-      - Destino principal: ${mainDestination}
-      - Outros destinos: ${otherDestinations.join(', ')}
-      - Data de início: ${new Date(startDate).toLocaleDateString('pt-BR')}
-      - Data de fim: ${new Date(endDate).toLocaleDateString('pt-BR')}
-      - Duração: ${duration} dias
-      - Interesses: ${interests.join(', ')}
-      - Preferências/restrições: ${preferences}
-      
-      Para cada dia do roteiro, inclua:
-      1. Data e título do dia
-      2. Lista de atividades com horários aproximados
-      3. Dicas úteis quando relevante
-      
-      Formate sua resposta como um JSON com a seguinte estrutura:
-      [
-        {
-          "date": "Dia 1 - DD/MM/AAAA",
-          "title": "Título descritivo para o dia",
-          "activities": [
-            { "id": "1-1", "time": "09:00 - 12:00", "description": "Descrição da atividade" },
-            ...
-          ],
-          "tip": "Dica útil para o dia (opcional)"
-        },
-        ...
-      ]
+    // Format the prompt for the assistant
+    const mensagem_usuario = `
+    Crie um roteiro detalhado de ${duration} dias em ${mainDestination}${otherDestinations.length > 0 ? ', incluindo visitas a ' + otherDestinations.join(', ') : ''}.
+    Data de início: ${new Date(startDate).toLocaleDateString('pt-BR')}
+    Data de fim: ${new Date(endDate).toLocaleDateString('pt-BR')}
+    Interesses: ${interests.join(', ')}
+    Preferências: ${preferences}
+    
+    Formato obrigatório:
+    - Organize por dias (Dia 1, Dia 2, etc.) com data específica
+    - Para cada dia, liste atividades com horários específicos
+    - Inclua sugestões de café da manhã, almoço e jantar
+    - Mencione pontos turísticos específicos de ${mainDestination}
+    - Adicione dicas úteis quando relevante
+    
+    Formate sua resposta como um JSON com a seguinte estrutura:
+    [
+      {
+        "date": "Dia 1 - DD/MM/AAAA",
+        "title": "Título descritivo para o dia",
+        "activities": [
+          { "id": "1-1", "time": "09:00 - 12:00", "description": "Descrição da atividade" },
+          ...
+        ],
+        "tip": "Dica útil para o dia (opcional)"
+      },
+      ...
+    ]
     `;
     
-    const response = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [
-        { role: "system", content: "Você é um especialista em planejamento de viagens. Crie roteiros detalhados em português com base nas informações fornecidas." },
-        { role: "user", content: prompt }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-    });
+    // Cria uma nova thread
+    console.log("Criando thread para geração de roteiro...");
+    const thread = await openai.beta.threads.create();
     
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error("Não foi possível gerar o roteiro. Resposta vazia.");
+    // Envia a mensagem para a thread
+    console.log("Enviando mensagem para o assistente...");
+    await openai.beta.threads.messages.create(
+      thread.id,
+      { role: "user", content: mensagem_usuario }
+    );
+    
+    // Executa o assistente na thread
+    console.log("Executando o assistente...");
+    const run = await openai.beta.threads.runs.create(
+      thread.id,
+      { assistant_id: ROTEIRO_ASSISTANT_ID }
+    );
+    
+    // Poll para verificar quando o assistente terminar
+    console.log("Aguardando resposta do assistente...");
+    let runStatus;
+    do {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Espera 1 segundo entre verificações
+      runStatus = await openai.beta.threads.runs.retrieve(
+        thread.id,
+        run.id
+      );
+      console.log(`Status atual: ${runStatus.status}`);
+    } while (runStatus.status !== "completed" && runStatus.status !== "failed");
+    
+    if (runStatus.status === "failed") {
+      throw new Error(`O assistente falhou: ${runStatus.last_error?.message || "Erro desconhecido"}`);
+    }
+    
+    // Recupera a mensagem de resposta
+    console.log("Obtendo resposta do assistente...");
+    const messages = await openai.beta.threads.messages.list(
+      thread.id
+    );
+    
+    // Encontra a última mensagem do assistente
+    let roteiro_texto = "";
+    for (const msg of messages.data) {
+      if (msg.role === "assistant") {
+        // Extrai o conteúdo da mensagem
+        if (msg.content && msg.content.length > 0 && msg.content[0].type === 'text') {
+          roteiro_texto = msg.content[0].text.value;
+          break;
+        }
+      }
+    }
+    
+    if (!roteiro_texto) {
+      throw new Error("O assistente não retornou um roteiro.");
+    }
+    
+    // Procura pelo JSON na resposta
+    let jsonMatch = roteiro_texto.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    if (!jsonMatch) {
+      // Tenta encontrar o JSON com outra abordagem
+      const startIndex = roteiro_texto.indexOf('[');
+      const endIndex = roteiro_texto.lastIndexOf(']');
+      
+      if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+        jsonMatch = [roteiro_texto.substring(startIndex, endIndex + 1)];
+      } else {
+        throw new Error("Não foi possível encontrar um JSON válido na resposta.");
+      }
     }
     
     try {
-      return JSON.parse(content);
+      const itineraryData = JSON.parse(jsonMatch[0]);
+      return itineraryData;
     } catch (parseError) {
-      console.error("Error parsing JSON response:", parseError);
-      throw new Error("Erro na formatação do roteiro gerado.");
+      console.error("Erro ao analisar JSON:", parseError);
+      throw new Error("Formato de resposta inválido do assistente.");
     }
   } catch (error) {
-    console.error("Error generating itinerary:", error);
-    throw new Error("Falha ao gerar o roteiro de viagem.");
+    console.error("Erro ao gerar roteiro:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    throw new Error(`Falha ao gerar o roteiro de viagem: ${errorMessage}`);
   }
 }
 

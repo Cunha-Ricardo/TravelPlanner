@@ -62,106 +62,44 @@ const Itinerary: React.FC = () => {
   });
 
   // Handle generating the itinerary
-  const handleGenerateItinerary = () => {
-    queryClient.invalidateQueries({ queryKey: ["/api/itinerary"] });
-    queryClient.refetchQueries({ queryKey: ["/api/itinerary", itineraryParams] });
+  const handleGenerateItinerary = async () => {
+    setIsGenerating(true);
     
-    // Mock data for demonstration
-    setTimeout(() => {
-      const mockItinerary: ItineraryDay[] = [
-        {
-          date: "Dia 1 - 10/06/2023",
-          title: "Chegada e Introdução a Paris",
-          activities: [
-            { id: "1-1", time: "09:00 - 12:00", description: "Check-in no hotel e descanso após o voo" },
-            { id: "1-2", time: "12:30 - 14:00", description: "Almoço no Café de Flore, um clássico café parisiense" },
-            { id: "1-3", time: "14:30 - 17:00", description: "Passeio a pé pelo Quartier Latin e Jardim de Luxemburgo" },
-            { id: "1-4", time: "19:00 - 21:30", description: "Jantar no Le Petit Châtelet, com vista para Notre-Dame" },
-          ],
-          tip: "Compre um carnê de tickets de metrô para economizar durante a estadia.",
-        },
-        {
-          date: "Dia 2 - 11/06/2023",
-          title: "Museu do Louvre e Arredores",
-          activities: [
-            { id: "2-1", time: "08:30 - 09:00", description: "Café da manhã no hotel" },
-            { id: "2-2", time: "09:30 - 13:00", description: "Visita ao Museu do Louvre (reserve ingressos antecipadamente)" },
-            { id: "2-3", time: "13:30 - 15:00", description: "Almoço no Café Marly com vista para a pirâmide do Louvre" },
-            { id: "2-4", time: "15:30 - 17:30", description: "Passeio pelo Jardim das Tulherias e Place de la Concorde" },
-            { id: "2-5", time: "18:00 - 19:30", description: "Compras na Rue de Rivoli" },
-            { id: "2-6", time: "20:00 - 22:00", description: "Jantar no Le Comptoir du Relais, um bistrô tradicional" },
-          ],
-        },
-        {
-          date: "Dia 3 - 12/06/2023",
-          title: "Torre Eiffel e Champs-Élysées",
-          activities: [
-            { id: "3-1", time: "09:00 - 12:00", description: "Visita à Torre Eiffel (reserva antecipada recomendada)" },
-            { id: "3-2", time: "12:30 - 14:00", description: "Almoço no Le Moulin de la Galette em Montmartre" },
-            { id: "3-3", time: "14:30 - 16:30", description: "Explorar Montmartre e a Basílica de Sacré-Cœur" },
-            { id: "3-4", time: "17:00 - 19:00", description: "Passeio pela Champs-Élysées até o Arco do Triunfo" },
-            { id: "3-5", time: "20:00 - 22:30", description: "Cruzeiro noturno pelo Rio Sena com jantar" },
-          ],
-          tip: "Reserve o cruzeiro com antecedência para garantir seu lugar.",
-        },
-        {
-          date: "Dia 4 - 13/06/2023",
-          title: "Versalhes",
-          activities: [
-            { id: "4-1", time: "08:00 - 09:00", description: "Café da manhã no hotel" },
-            { id: "4-2", time: "09:30 - 10:30", description: "Trem para Versalhes (30 minutos de Paris)" },
-            { id: "4-3", time: "10:30 - 14:30", description: "Visita ao Palácio de Versalhes e seus jardins" },
-            { id: "4-4", time: "14:30 - 16:00", description: "Almoço em restaurante próximo ao palácio" },
-            { id: "4-5", time: "16:00 - 17:30", description: "Visita ao Grand Trianon e Petit Trianon" },
-            { id: "4-6", time: "18:00 - 19:00", description: "Retorno a Paris" },
-            { id: "4-7", time: "20:00 - 22:00", description: "Jantar no Le Procope, o café mais antigo de Paris" },
-          ],
-        },
-        {
-          date: "Dia 5 - 14/06/2023",
-          title: "Museu d'Orsay e Marais",
-          activities: [
-            { id: "5-1", time: "09:00 - 12:30", description: "Visita ao Museu d'Orsay" },
-            { id: "5-2", time: "13:00 - 14:30", description: "Almoço no L'As du Fallafel no bairro Le Marais" },
-            { id: "5-3", time: "15:00 - 17:00", description: "Explorar o bairro de Le Marais e Place des Vosges" },
-            { id: "5-4", time: "17:30 - 19:00", description: "Visita ao Centro Pompidou" },
-            { id: "5-5", time: "20:00 - 22:00", description: "Jantar no Les Philosophes" },
-          ],
-        },
-        {
-          date: "Dia 6 - 15/06/2023",
-          title: "Dia Livre em Paris",
-          activities: [
-            { id: "6-1", time: "09:00 - 10:00", description: "Café da manhã no hotel" },
-            { id: "6-2", time: "10:30 - 12:30", description: "Visita às Catacumbas de Paris (opcional)" },
-            { id: "6-3", time: "13:00 - 14:30", description: "Almoço em cafés de sua escolha" },
-            { id: "6-4", time: "15:00 - 18:00", description: "Compras nas Galerias Lafayette" },
-            { id: "6-5", time: "19:00 - 21:30", description: "Jantar e espetáculo no Moulin Rouge (opcional)" },
-          ],
-          tip: "Reserve com antecedência para o Moulin Rouge, pois os ingressos esgotam rapidamente.",
-        },
-        {
-          date: "Dia 7 - 16/06/2023",
-          title: "Nice e Côte d'Azur",
-          activities: [
-            { id: "7-1", time: "06:30 - 07:00", description: "Check-out do hotel em Paris" },
-            { id: "7-2", time: "07:30 - 12:00", description: "Trem de alta velocidade para Nice" },
-            { id: "7-3", time: "12:30 - 13:30", description: "Check-in no hotel em Nice" },
-            { id: "7-4", time: "14:00 - 15:30", description: "Almoço em restaurante à beira-mar" },
-            { id: "7-5", time: "16:00 - 19:00", description: "Passeio pela Promenade des Anglais e Cidade Velha" },
-            { id: "7-6", time: "20:00 - 22:00", description: "Jantar em restaurante local com pratos provençais" },
-          ],
-        },
-      ];
+    try {
+      // Faz a requisição para a API
+      const response = await apiRequest(
+        "POST",
+        "/api/itinerary",
+        itineraryParams
+      );
       
-      setGeneratedItinerary(mockItinerary);
-      setIsGenerating(false);
+      if (!response.ok) {
+        throw new Error("Falha ao gerar o roteiro");
+      }
+      
+      const data = await response.json();
+      
+      if (Array.isArray(data)) {
+        setGeneratedItinerary(data);
+        
+        toast({
+          title: "Roteiro gerado com sucesso!",
+          description: "Seu itinerário de viagem foi criado usando nosso assistente de IA.",
+        });
+      } else {
+        throw new Error("Formato de resposta inválido");
+      }
+    } catch (error) {
+      console.error("Erro ao gerar roteiro:", error);
       
       toast({
-        title: "Roteiro gerado com sucesso!",
-        description: "Seu itinerário de viagem foi criado.",
+        title: "Erro ao gerar roteiro",
+        description: error instanceof Error ? error.message : "Ocorreu um erro desconhecido. Tente novamente.",
+        variant: "destructive",
       });
-    }, 1500);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // Handle adding a new interest
