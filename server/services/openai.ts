@@ -1,12 +1,13 @@
 import OpenAI from "openai";
+import 'dotenv/config';
 
-// Configure OpenAI client
+
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "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",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const MODEL = "gpt-4o";
+const MODEL = "gpt-3.5-turbo";
 
 // Assistentes específicos
 const ROTEIRO_ASSISTANT_ID = "asst_orz98VXa4zht5BF5fvHd7TxL";
